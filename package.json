@@ -1,0 +1,27 @@
+{
+  "name": "@ts-common/devreg",
+  "version": "0.0.0",
+  "description": "DevReg",
+  "main": "main/index.js",
+  "scripts": {
+    "start": "tsc && node ./dist/index.js",
+    "test": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ts-common/devreg.git"
+  },
+  "author": "Sergey Shandar",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/ts-common/devreg/issues"
+  },
+  "homepage": "https://github.com/ts-common/devreg#readme",
+  "devDependencies": {
+    "@types/node": "^10.12.10",
+    "typescript": "^3.1.6"
+  },
+  "dependencies": {
+    "tslib": "^1.9.3"
+  }
+}
