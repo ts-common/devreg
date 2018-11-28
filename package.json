@@ -1,11 +1,14 @@
 {
-  "name": "@ts-common/devreg",
+  "name": "@ts-common/local-instal",
   "version": "0.0.0",
   "description": "DevReg",
   "main": "main/index.js",
   "scripts": {
     "test": "tsc",
     "li": "tsc && node dist/index.js"
+  },
+  "bin": {
+    "local-install": "dist/index.js"
   },
   "repository": {
     "type": "git",

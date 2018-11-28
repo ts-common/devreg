@@ -27,12 +27,6 @@ interface VersionLocation {
   readonly location: string
 }
 
-/* // use maxSatisfies() function.
-interface Versions {
-  readonly [version: string]: ReadonlyArray<string> | undefined
-}
-*/
-
 const packages = (p: string): Iterable<sm.Entry<VersionLocation>> =>
   it.flatMap(
     fs.readdirSync(p, { withFileTypes: true }),
@@ -62,7 +56,6 @@ const main = () => {
   }
 
   const localPackages = sm.stringMap(packages(path.join(current, "..", "..")))
-  // console.log(localPackages)
 
   const p = sm.stringMap(packages(path.join(current, nodeModules)))
   for (const [name, version] of sm.entries(dependencies)) {
@@ -94,23 +87,6 @@ const main = () => {
 
   const f = cp.execSync("npm ci").toString()
   console.log(f)
-
-  /*
-  const current = path.resolve(".")
-
-  // scan `node_modules`
-  const folders = fs.readdirSync(path.join(current, node_modules))
-
-  // scan folders for .tgz and packages. it may run 'pack' if there is no tgz.
-  // ...
-
-  for (const [packageId, version] of Object.entries(dependencies)) {
-  }
-
-  // run npm install ...tgz --no-save --package-lock-only
-  // ...
-  // run npm ci
-  */
 }
 
 main()
