@@ -1,5 +1,5 @@
 {
-  "name": "@ts-common/local-instal",
+  "name": "@ts-common/local-install",
   "version": "0.0.0",
   "description": "DevReg",
   "main": "main/index.js",
