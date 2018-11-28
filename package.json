@@ -1,11 +1,12 @@
 {
   "name": "@ts-common/local-install",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "DevReg",
   "main": "dist/index.js",
   "scripts": {
     "test": "tsc",
-    "li": "tsc && node dist/index.js"
+    "li": "tsc && node dist/index.js",
+    "prepack": "npm install && tsc"
   },
   "files": [
     "dist/index.js",
