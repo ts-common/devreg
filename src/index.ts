@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import * as fs from "fs"
 import * as json from "@ts-common/json"
 import * as jsonParser from "@ts-common/json-parser"
