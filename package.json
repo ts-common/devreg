@@ -1,12 +1,19 @@
 {
   "name": "@ts-common/local-install",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "DevReg",
-  "main": "main/index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "tsc",
     "li": "tsc && node dist/index.js"
   },
+  "files": [
+    "dist/index.js",
+    "dist/index.d.ts",
+    "dist/index.js.map",
+    "dist/index.d.ts.map",
+    "src/index.ts"
+  ],
   "bin": {
     "local-install": "dist/index.js"
   },
