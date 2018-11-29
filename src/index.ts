@@ -20,6 +20,7 @@ interface PackageJson {
   readonly name: string
   readonly version: string
   readonly dependencies?: Dependencies
+  readonly devDependencies?: Dependencies
 }
 
 const readPackageJson = (file: string): PackageJson =>
@@ -52,7 +53,10 @@ const main = () => {
 
   const packageJson = readPackageJson(path.join(current, "package.json"))
 
-  const dependencies = packageJson["dependencies"]
+  const dependencies = {
+    ...packageJson["dependencies"],
+    ...packageJson["devDependencies"]
+  }
 
   if (dependencies === undefined || !json.isObject(dependencies)) {
     return
