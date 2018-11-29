@@ -8,6 +8,7 @@ import * as it from "@ts-common/iterator"
 import * as sm from "@ts-common/string-map"
 import * as semver from "semver"
 import * as cp from "child_process"
+import * as process from "process"
 
 const nodeModules = "node_modules"
 
@@ -59,6 +60,13 @@ const main = () => {
 
   const localPackages = sm.stringMap(packages(path.join(current, "..", "..")))
 
+  const errors: string[] = []
+
+  const reportError = (error: string) => {
+    errors.push(error)
+    console.error(`error : ${error}`)
+  }
+
   const p = sm.stringMap(packages(path.join(current, nodeModules)))
   for (const [name, version] of sm.entries(dependencies)) {
     const versionLocation = p[name]
@@ -72,7 +80,7 @@ const main = () => {
       } else {
         const local = localPackages[name]
         if (local === undefined || !semver.satisfies(local.version, version)) {
-          console.log("not found")
+          reportError(`${name}@${version} is not found`)
         } else {
           const tgz = `${name.replace("@", "").replace("/", "-")}-${local.version}.tgz`
           const pathTgz = path.join(local.location, tgz)
@@ -87,8 +95,12 @@ const main = () => {
     }
   }
 
-  const f = cp.execSync("npm ci").toString()
-  console.log(f)
+  if (errors.length == 0) {
+    const f = cp.execSync("npm ci").toString()
+    console.log(f)
+  } else {
+    process.exit(1)
+  }
 }
 
 main()
