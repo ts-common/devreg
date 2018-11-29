@@ -48,18 +48,25 @@ const packages = (p: string): Iterable<sm.Entry<VersionLocation>> =>
     }
   )
 
-const main = () => {
+const reportInfo = (info: string) => console.log(`info: ${info}`)
+
+const exec = (title: string, cmd: string, options?: cp.SpawnOptions): string => {
+  reportInfo(title)
+  return cp.spawnSync(cmd, { ...options, shell: true, stdio: "pipe" }).stdout.toString()
+}
+
+const main = (): number => {
   const current = path.resolve(".")
 
   const packageJson = readPackageJson(path.join(current, "package.json"))
 
   const dependencies: Dependencies = {
-    ...packageJson["dependencies"],
-    ...packageJson["devDependencies"]
+    ...packageJson.dependencies,
+    ...packageJson.devDependencies
   }
 
   if (dependencies === undefined || !json.isObject(dependencies)) {
-    return
+    return 0
   }
 
   const localPackages = sm.stringMap(packages(path.join(current, "..", "..")))
@@ -77,26 +84,36 @@ const main = () => {
   for (const [name, version] of sm.entries(dependencies)) {
     const versionLocation = p[name]
     if (versionLocation === undefined || !semver.satisfies(versionLocation.version, version)) {
-      console.log(`searching for ${name}@${version}`)
-      const versions = JSON.parse(cp.execSync(`npm view ${name} versions --json`).toString()) as
-        ReadonlyArray<string>
+      const nameVersion = `${name}@${version}`
+      const npmView = `npm view ${name} versions --json`
+      const versions = jsonParser.parse(
+        npmView,
+        exec(`searching for ${nameVersion}...`, npmView)
+      ) as ReadonlyArray<string>
       if (versions.find(v => semver.satisfies(v, version)) !== undefined) {
-        const x = cp.execSync(`npm install ${name}@${version} --no-save --package-lock-only`).toString()
-        console.log(x)
+        exec(
+          `installing ${nameVersion} from npm...`,
+          `npm install ${nameVersion} --no-save --package-lock-only`
+        )
         changes = true
       } else {
         const local = localPackages[name]
         if (local === undefined || !semver.satisfies(local.version, version)) {
-          reportError(`${name}@${version} is not found`)
+          reportError(`${nameVersion} is not found`)
         } else {
           const tgz = `${name.replace("@", "").replace("/", "-")}-${local.version}.tgz`
           const pathTgz = path.join(local.location, tgz)
           if (!fs.existsSync(pathTgz)) {
-            const o = cp.execSync(`npm pack`, { cwd: local.location }).toString()
-            console.log(o)
+            exec(
+              `packing ${nameVersion} from ${local.location} ...`,
+              `npm pack`,
+              { cwd: local.location }
+            )
           }
-          const ox = cp.execSync(`npm install ${pathTgz} --no-save --package-lock-only`).toString()
-          console.log(ox)
+          exec(
+            `binding ${nameVersion} to ${pathTgz} ...`,
+            `npm install ${pathTgz} --no-save --package-lock-only`
+          )
           changes = true
         }
       }
@@ -104,13 +121,13 @@ const main = () => {
   }
 
   if (errors.length === 0 && changes) {
-    const f = cp.execSync("npm ci").toString()
-    console.log(f)
+    exec(
+      `installing all packages...`,
+      "npm ci"
+    )
   }
 
-  if (errors.length !== 0) {
-    process.exit(1)
-  }
+  return errors.length === 0 ? 0 : 1
 }
 
-main()
+process.exit(main())
