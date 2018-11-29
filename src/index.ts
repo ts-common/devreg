@@ -53,7 +53,7 @@ const main = () => {
 
   const packageJson = readPackageJson(path.join(current, "package.json"))
 
-  const dependencies = {
+  const dependencies: Dependencies = {
     ...packageJson["dependencies"],
     ...packageJson["devDependencies"]
   }
