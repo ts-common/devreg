@@ -67,6 +67,8 @@ const main = () => {
     console.error(`error : ${error}`)
   }
 
+  let changes = false
+
   const p = sm.stringMap(packages(path.join(current, nodeModules)))
   for (const [name, version] of sm.entries(dependencies)) {
     const versionLocation = p[name]
@@ -77,6 +79,7 @@ const main = () => {
       if (versions.find(v => semver.satisfies(v, version)) !== undefined) {
         const x = cp.execSync(`npm install ${name}@${version} --no-save --package-lock-only`).toString()
         console.log(x)
+        changes = true
       } else {
         const local = localPackages[name]
         if (local === undefined || !semver.satisfies(local.version, version)) {
@@ -90,15 +93,18 @@ const main = () => {
           }
           const ox = cp.execSync(`npm install ${pathTgz} --no-save --package-lock-only`).toString()
           console.log(ox)
+          changes = true
         }
       }
     }
   }
 
-  if (errors.length == 0) {
+  if (errors.length === 0 && changes) {
     const f = cp.execSync("npm ci").toString()
     console.log(f)
-  } else {
+  }
+
+  if (errors.length !== 0) {
     process.exit(1)
   }
 }
