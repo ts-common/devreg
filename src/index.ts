@@ -23,12 +23,18 @@ interface PackageJson {
   readonly devDependencies?: Dependencies
 }
 
+const allDependencies = (p: PackageJson): Dependencies => ({
+  ...p.dependencies,
+  ...p.devDependencies
+})
+
 const readPackageJson = (file: string): PackageJson =>
   jsonParser.parse(file, fs.readFileSync(file).toString()) as PackageJson
 
 interface VersionLocation {
   readonly version: string
   readonly location: string
+  readonly dependencies: Dependencies
 }
 
 const packages = (p: string): Iterable<sm.Entry<VersionLocation>> =>
@@ -42,7 +48,14 @@ const packages = (p: string): Iterable<sm.Entry<VersionLocation>> =>
       const pj = path.join(dir, "package.json")
       if (fs.existsSync(pj)) {
         const j = readPackageJson(pj)
-        return [sm.entry(j.name, { version: j.version, location: dir })]
+        return [sm.entry(
+          j.name,
+          {
+            version: j.version,
+            location: dir,
+            dependencies: allDependencies(j)
+          }
+        )]
       }
       return packages(dir)
     }
@@ -60,10 +73,7 @@ const main = (): number => {
 
   const packageJson = readPackageJson(path.join(current, "package.json"))
 
-  const dependencies: Dependencies = {
-    ...packageJson.dependencies,
-    ...packageJson.devDependencies
-  }
+  let dependencies = allDependencies(packageJson)
 
   if (dependencies === undefined || !json.isObject(dependencies)) {
     return 0
@@ -81,43 +91,53 @@ const main = (): number => {
   let changes = false
 
   const p = sm.stringMap(packages(path.join(current, nodeModules)))
-  for (const [name, version] of sm.entries(dependencies)) {
-    const versionLocation = p[name]
-    if (versionLocation === undefined || !semver.satisfies(versionLocation.version, version)) {
-      const nameVersion = `${name}@${version}`
-      const npmView = `npm view ${name} versions --json`
-      const versions = jsonParser.parse(
-        npmView,
-        exec(`searching for ${nameVersion}...`, npmView)
-      ) as ReadonlyArray<string>
-      if (versions.find(v => semver.satisfies(v, version)) !== undefined) {
-        exec(
-          `installing ${nameVersion} from npm...`,
-          `npm install ${nameVersion} --no-save --package-lock-only`
-        )
-        changes = true
-      } else {
-        const local = localPackages[name]
-        if (local === undefined || !semver.satisfies(local.version, version)) {
-          reportError(`${nameVersion} is not found`)
-        } else {
-          const tgz = `${name.replace("@", "").replace("/", "-")}-${local.version}.tgz`
-          const pathTgz = path.join(local.location, tgz)
-          if (!fs.existsSync(pathTgz)) {
-            exec(
-              `packing ${nameVersion} from ${local.location} ...`,
-              `npm pack`,
-              { cwd: local.location }
-            )
-          }
+
+  const bindDependencies = (d: Dependencies): Dependencies => {
+    let additionalDependencies: Dependencies = {}
+    for (const [name, version] of sm.entries(d)) {
+      const versionLocation = p[name]
+      if (versionLocation === undefined || !semver.satisfies(versionLocation.version, version)) {
+        const nameVersion = `${name}@${version}`
+        const npmView = `npm view ${name} versions --json`
+        const versions = jsonParser.parse(
+          npmView,
+          exec(`searching for ${nameVersion}...`, npmView)
+        ) as ReadonlyArray<string>
+        if (versions.find(v => semver.satisfies(v, version)) !== undefined) {
           exec(
-            `binding ${nameVersion} to ${pathTgz} ...`,
-            `npm install ${pathTgz} --no-save --package-lock-only`
+            `installing ${nameVersion} from npm...`,
+            `npm install ${nameVersion} --no-save --package-lock-only`
           )
           changes = true
+        } else {
+          const local = localPackages[name]
+          if (local === undefined || !semver.satisfies(local.version, version)) {
+            reportError(`${nameVersion} is not found`)
+          } else {
+            const tgz = `${name.replace("@", "").replace("/", "-")}-${local.version}.tgz`
+            const pathTgz = path.join(local.location, tgz)
+            if (!fs.existsSync(pathTgz)) {
+              exec(
+                `packing ${nameVersion} from ${local.location} ...`,
+                `npm pack`,
+                { cwd: local.location }
+              )
+            }
+            exec(
+              `binding ${nameVersion} to ${pathTgz} ...`,
+              `npm install ${pathTgz} --no-save --package-lock-only`
+            )
+            additionalDependencies = { ...additionalDependencies, ...local.dependencies }
+            changes = true
+          }
         }
       }
     }
+    return additionalDependencies
+  }
+
+  while (Object.entries(dependencies).length > 0) {
+    dependencies = bindDependencies(dependencies)
   }
 
   if (errors.length === 0 && changes) {
