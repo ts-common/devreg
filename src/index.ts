@@ -88,8 +88,6 @@ const main = (): number => {
     console.error(`error : ${error}`)
   }
 
-  let changes = false
-
   const p = sm.stringMap(packages(path.join(current, nodeModules)))
 
   const packagesToInstall: string[] = []
@@ -107,13 +105,6 @@ const main = (): number => {
         ) as ReadonlyArray<string>
         if (versions.find(v => semver.satisfies(v, version)) !== undefined) {
           packagesToInstall.push(nameVersion)
-          /*
-          exec(
-            `installing ${nameVersion} from npm...`,
-            `npm install ${nameVersion} --no-save --package-lock-only`
-          )
-          */
-          changes = true
         } else {
           const local = localPackages[name]
           if (local === undefined || !semver.satisfies(local.version, version)) {
@@ -129,14 +120,7 @@ const main = (): number => {
               )
             }
             packagesToInstall.push(pathTgz)
-            /*
-            exec(
-              `binding ${nameVersion} to ${pathTgz} ...`,
-              `npm install ${pathTgz} --no-save --package-lock-only`
-            )
-            */
             additionalDependencies = { ...additionalDependencies, ...local.dependencies }
-            changes = true
           }
         }
       }
@@ -148,7 +132,7 @@ const main = (): number => {
     dependencies = bindDependencies(dependencies)
   }
 
-  if (errors.length === 0 && changes) {
+  if (errors.length === 0 && packagesToInstall.length > 0) {
     reportInfo("packages:")
     for (const i of packagesToInstall) {
       reportInfo(`  ${i}`)
