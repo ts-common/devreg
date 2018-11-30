@@ -92,6 +92,8 @@ const main = (): number => {
 
   const p = sm.stringMap(packages(path.join(current, nodeModules)))
 
+  const packagesToInstall: string[] = []
+
   const bindDependencies = (d: Dependencies): Dependencies => {
     let additionalDependencies: Dependencies = {}
     for (const [name, version] of sm.entries(d)) {
@@ -104,10 +106,13 @@ const main = (): number => {
           exec(`searching for ${nameVersion}...`, npmView)
         ) as ReadonlyArray<string>
         if (versions.find(v => semver.satisfies(v, version)) !== undefined) {
+          packagesToInstall.push(nameVersion)
+          /*
           exec(
             `installing ${nameVersion} from npm...`,
             `npm install ${nameVersion} --no-save --package-lock-only`
           )
+          */
           changes = true
         } else {
           const local = localPackages[name]
@@ -123,10 +128,13 @@ const main = (): number => {
                 { cwd: local.location }
               )
             }
+            packagesToInstall.push(pathTgz)
+            /*
             exec(
               `binding ${nameVersion} to ${pathTgz} ...`,
               `npm install ${pathTgz} --no-save --package-lock-only`
             )
+            */
             additionalDependencies = { ...additionalDependencies, ...local.dependencies }
             changes = true
           }
@@ -141,6 +149,11 @@ const main = (): number => {
   }
 
   if (errors.length === 0 && changes) {
+    const list = packagesToInstall.join(" ")
+    exec(
+      `binding packages ${list}`,
+      `npm install ${list} --no-save --package-lock-only`
+    )
     exec(
       `installing all packages...`,
       "npm ci"
