@@ -149,9 +149,13 @@ const main = (): number => {
   }
 
   if (errors.length === 0 && changes) {
+    reportInfo("packages:")
+    for (const i of packagesToInstall) {
+      reportInfo(`  ${i}`)
+    }
     const list = packagesToInstall.join(" ")
     exec(
-      `binding packages ${list}`,
+      `saving packages to package-lock.json ...`,
       `npm install ${list} --no-save --package-lock-only`
     )
     exec(
