@@ -53,7 +53,7 @@ const packages = (p: string): Iterable<sm.Entry<VersionLocation>> =>
           {
             version: j.version,
             location: dir,
-            dependencies: allDependencies(j)
+            dependencies: j.dependencies || {}
           }
         )]
       }
