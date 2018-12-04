@@ -38,28 +38,30 @@ interface VersionLocation {
 }
 
 const packages = (p: string): Iterable<sm.Entry<VersionLocation>> =>
-  it.flatMap(
-    fs.readdirSync(p, { withFileTypes: true }),
-    d => {
-      if (!d.isDirectory()) {
-        return []
+  fs.existsSync(p) ?
+    it.flatMap(
+      fs.readdirSync(p, { withFileTypes: true }),
+      d => {
+        if (!d.isDirectory()) {
+          return []
+        }
+        const dir = path.join(p, d.name)
+        const pj = path.join(dir, "package.json")
+        if (fs.existsSync(pj)) {
+          const j = readPackageJson(pj)
+          return [sm.entry(
+            j.name,
+            {
+              version: j.version,
+              location: dir,
+              dependencies: j.dependencies || {}
+            }
+          )]
+        }
+        return packages(dir)
       }
-      const dir = path.join(p, d.name)
-      const pj = path.join(dir, "package.json")
-      if (fs.existsSync(pj)) {
-        const j = readPackageJson(pj)
-        return [sm.entry(
-          j.name,
-          {
-            version: j.version,
-            location: dir,
-            dependencies: j.dependencies || {}
-          }
-        )]
-      }
-      return packages(dir)
-    }
-  )
+    ) :
+    []
 
 const reportInfo = (info: string) => console.log(`info: ${info}`)
 
