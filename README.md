@@ -7,10 +7,7 @@
 ```json
 {
   "scripts": {
-    "li": "local-install"
-  },
-  "devDependencies": {
-    "@ts-common/local-install": "^0.0.1"
+    "li": "npm install @ts-common/local-install --no-save && local-install"
   }
 }
 ```
