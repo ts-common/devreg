@@ -67,7 +67,9 @@ const reportInfo = (info: string) => console.log(`info: ${info}`)
 
 const exec = (title: string, cmd: string, options?: cp.SpawnOptions): string => {
   reportInfo(title)
-  return cp.spawnSync(cmd, { ...options, shell: true, stdio: "pipe" }).stdout.toString()
+  const result = cp.spawnSync(cmd, { ...options, shell: true, stdio: "pipe" })
+  console.error(result.stderr.toString())
+  return result.stdout.toString()
 }
 
 const main = (): number => {
