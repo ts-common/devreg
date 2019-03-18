@@ -146,10 +146,12 @@ const main = (): number => {
       `saving packages to package-lock.json ...`,
       `npm install ${list} --no-save --package-lock-only`
     )
+    /*
     exec(
       `installing all packages...`,
       "npm ci"
     )
+    */
   }
 
   return errors.length === 0 ? 0 : 1
