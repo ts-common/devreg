@@ -12,4 +12,5 @@ npm install -g @ts-common/local-install
 
 ```
 local-install
+npm ci
 ```
